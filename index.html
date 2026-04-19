@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Obbzy Games</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            transition: background 1s;
+            color: white;
+        }
+
+        .screen {
+            display: none;
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .active {
+            display: flex;
+        }
+
+        /* INTRO ANIMATION */
+        #title {
+            font-size: 3em;
+            border-right: 3px solid white;
+            white-space: nowrap;
+            overflow: hidden;
+            animation: typing 3s steps(30), blink 0.5s infinite;
+        }
+
+        @keyframes typing {
+            from {
+                width: 0
+            }
+
+            to {
+                width: 100%
+            }
+        }
+
+        @keyframes blink {
+            50% {
+                border-color: transparent
+            }
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-top: 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: black;
+            color: white;
+        }
+
+        .door {
+            width: 100px;
+            height: 150px;
+            margin: 10px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .unlocked {
+            background: limegreen;
+        }
+
+        /* THEMES */
+        .purple {
+            background: linear-gradient(135deg, #6a0dad, #b266ff);
+        }
+
+        .red {
+            background: linear-gradient(135deg, #ff4d4d, #ff9999);
+        }
+
+        .blue {
+            background: linear-gradient(135deg, #3399ff, #99ccff);
+        }
+
+        .green {
+            background: linear-gradient(135deg, #33cc66, #99ffcc);
+        }
+
+        .orange {
+            background: linear-gradient(135deg, #ff9933, #ffd699);
+        }
+
+        .pink {
+            background: linear-gradient(135deg, #ff66cc, #ffb3ec);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- INTRO -->
+    <div id="intro" class="screen active">
+        <h1 id="title"></h1>
+    </div>
+
+    <!-- STORY -->
+    <div id="story" class="screen">
+        <p id="storyText"></p>
+        <button onclick="nextStory()">Next</button>
+    </div>
+
+    <!-- GAME -->
+    <div id="game" class="screen">
+        <h2 id="roleText"></h2>
+        <div id="doors"></div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const isFriend = urlParams.get("join");
+
+        // STORE PLAYERS
+        let players = JSON.parse(localStorage.getItem("players") || "[]");
+
+        // COLOR THEMES
+        const colors = ["red", "blue", "green", "orange", "pink"];
+
+        // ASSIGN ROLE
+        let role = "main";
+        let playerIndex = -1;
+
+        if (isFriend) {
+            role = "friend";
+
+            if (!sessionStorage.getItem("joined")) {
+                players.push({ time: Date.now() });
+                localStorage.setItem("players", JSON.stringify(players));
+                sessionStorage.setItem("joined", "true");
+            }
+
+            playerIndex = players.length - 1;
+        }
+
+        // APPLY COLOR
+        if (role === "main") {
+            document.body.classList.add("purple");
+        } else {
+            document.body.classList.add(colors[playerIndex % colors.length]);
+        }
+
+        // INTRO TEXT
+        const introText = role === "main"
+            ? "WELCOME TO THE OBBZY GAMES"
+            : "YOU HAVE BEEN CHOSEN";
+
+        let i = 0;
+        function typeWriter() {
+            if (i < introText.length) {
+                document.getElementById("title").innerHTML += introText.charAt(i);
+                i++;
+                setTimeout(typeWriter, 80);
+            }
+        }
+        typeWriter();
+
+        // STORY
+        const mainStory = [
+            "You must gather 5 friends.",
+            "Each friend holds a key.",
+            "Together you unlock the final surprise."
+        ];
+
+        const friendStory = [
+            "Your friend needs your help.",
+            "You have been assigned a secret role.",
+            "Solve your challenge and deliver your code."
+        ];
+
+        let story = role === "main" ? mainStory : friendStory;
+        let current = 0;
+
+        // TRANSITION
+        setTimeout(() => {
+            document.getElementById("intro").classList.remove("active");
+            document.getElementById("story").classList.add("active");
+            document.getElementById("storyText").innerText = story[0];
+        }, 3500);
+
+        function nextStory() {
+            current++;
+            if (current < story.length) {
+                document.getElementById("storyText").innerText = story[current];
+            } else {
+                startGame();
+            }
+        }
+
+        // GAME START
+        function startGame() {
+            document.getElementById("story").classList.remove("active");
+            document.getElementById("game").classList.add("active");
+
+            if (role === "main") {
+                document.getElementById("roleText").innerText =
+                    "Share this link with friends:\n" +
+                    window.location.href + "?join=true";
+
+                let doorsHTML = "";
+                for (let i = 1; i <= 5; i++) {
+                    doorsHTML += `<div class="door">Door ${i}</div>`;
+                }
+                document.getElementById("doors").innerHTML = doorsHTML;
+
+            } else {
+                let assignedDoor = playerIndex + 1;
+
+                document.getElementById("roleText").innerText =
+                    "You are Player " + assignedDoor;
+
+                document.getElementById("doors").innerHTML =
+                    `<div class="door">Your Door: ${assignedDoor}</div>
+             <p>Your secret code: ${assignedDoor}${assignedDoor}${assignedDoor}${assignedDoor}</p>`;
+            }
+        }
+    </script>
+
+</body>
+
+</html>
